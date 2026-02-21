@@ -6,6 +6,7 @@ import {
   Lane, BandROI, NormalizedResult, ExportRow,
 } from '@blotlab/engine';
 import { Toolbar } from './components/Toolbar.js';
+import { generateSampleImage } from './samples/index.js';
 import { CanvasPanel } from './components/CanvasPanel.js';
 import { ResultsPanel } from './components/ResultsPanel.js';
 
@@ -54,6 +55,11 @@ export function App() {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) loadImage(file);
+  }, [loadImage]);
+
+  const loadSample = useCallback((id: string) => {
+    const file = generateSampleImage(id);
+    loadImage(file);
   }, [loadImage]);
 
   const runAutoDetect = useCallback(() => {
@@ -112,6 +118,7 @@ export function App() {
         onExportCSV={downloadCSV}
         onExportChart={downloadChart}
         onToggleTheme={toggleTheme}
+        onLoadSample={loadSample}
         theme={theme}
         ballRadius={ballRadius}
         onBallRadiusChange={setBallRadius}

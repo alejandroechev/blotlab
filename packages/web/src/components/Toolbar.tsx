@@ -1,3 +1,5 @@
+import { samples } from '../samples/index.js';
+
 interface ToolbarProps {
   onUpload: () => void;
   onAutoDetect: () => void;
@@ -5,6 +7,7 @@ interface ToolbarProps {
   onExportCSV: () => void;
   onExportChart: () => void;
   onToggleTheme: () => void;
+  onLoadSample: (id: string) => void;
   theme: 'light' | 'dark';
   ballRadius: number;
   onBallRadiusChange: (r: number) => void;
@@ -14,12 +17,22 @@ interface ToolbarProps {
 
 export function Toolbar({
   onUpload, onAutoDetect, onNormalize, onExportCSV, onExportChart,
-  onToggleTheme, theme, ballRadius, onBallRadiusChange, laneCount, hasImage,
+  onToggleTheme, onLoadSample, theme, ballRadius, onBallRadiusChange, laneCount, hasImage,
 }: ToolbarProps) {
   return (
     <div className="toolbar">
       <h1>🧬 BlotLab</h1>
       <button onClick={onUpload}>📂 Upload</button>
+      <select
+        className="sample-select"
+        value=""
+        onChange={(e) => { if (e.target.value) onLoadSample(e.target.value); }}
+      >
+        <option value="" disabled>🧪 Samples</option>
+        {samples.map((s) => (
+          <option key={s.id} value={s.id} title={s.description}>{s.name}</option>
+        ))}
+      </select>
       {hasImage && (
         <>
           <div className="radius-control">

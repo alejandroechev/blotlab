@@ -68,6 +68,16 @@ body {
 
 .toolbar button:hover { background: var(--primary); color: #fff; }
 
+.toolbar .sample-select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .toolbar .radius-control {
   display: flex;
   align-items: center;
