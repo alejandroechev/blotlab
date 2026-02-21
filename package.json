@@ -1,0 +1,9 @@
+{
+  "name": "blotlab",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "dev": "pnpm --filter @blotlab/web dev"
+  }
+}

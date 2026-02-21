@@ -1,0 +1,17 @@
+{
+  "name": "@blotlab/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "blotlab": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@blotlab/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
