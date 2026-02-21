@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlotLab — Western Blot Densitometry Guide</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --muted: #555;
+    --accent: #4361ee;
+    --accent-light: #eef1ff;
+    --border: #e0e0e0;
+    --code-bg: #f4f4f8;
+    --card-bg: #fafafa;
+    --hero-bg: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+    --hero-fg: #fff;
+    --eq-bg: #f0f0fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f1a;
+      --fg: #e0e0e8;
+      --muted: #999;
+      --accent: #7b8cff;
+      --accent-light: #1a1a30;
+      --border: #2a2a3a;
+      --code-bg: #16162a;
+      --card-bg: #14142a;
+      --hero-bg: linear-gradient(135deg, #1a1a40 0%, #0a0a20 100%);
+      --hero-fg: #e0e0f0;
+      --eq-bg: #1a1a30;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.7;
+  }
+  .container { max-width: 800px; margin: 0 auto; padding: 0 24px 80px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Back link */
+  .back-link {
+    display: inline-block;
+    padding: 16px 0 8px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* Hero */
+  .hero {
+    background: var(--hero-bg);
+    color: var(--hero-fg);
+    padding: 56px 32px;
+    border-radius: 12px;
+    text-align: center;
+    margin: 8px 0 40px;
+  }
+  .hero h1 { font-size: 2.4rem; margin-bottom: 8px; }
+  .hero p { font-size: 1.15rem; opacity: 0.9; }
+
+  /* Sections */
+  h2 {
+    font-size: 1.5rem;
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  h3 { font-size: 1.15rem; margin: 28px 0 10px; color: var(--accent); }
+  p { margin-bottom: 14px; }
+  ul, ol { margin: 0 0 16px 24px; }
+  li { margin-bottom: 6px; }
+
+  /* Equation blocks */
+  .eq {
+    display: block;
+    background: var(--eq-bg);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    overflow-x: auto;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* Glossary */
+  .glossary { list-style: none; margin-left: 0; }
+  .glossary li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .glossary li:last-child { border-bottom: none; }
+  .glossary strong { color: var(--accent); }
+
+  /* Steps */
+  .steps { counter-reset: step; list-style: none; margin-left: 0; }
+  .steps li {
+    counter-increment: step;
+    padding: 12px 0 12px 48px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 12px;
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 14px 0;
+  }
+
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<a href="/" class="back-link">← Back to BlotLab</a>
+
+<div class="hero">
+  <h1>🧬 BlotLab</h1>
+  <p>Free, browser-based western blot densitometry — no install, no upload to servers.</p>
+</div>
+
+<!-- ─── 1. WHAT IS WESTERN BLOTTING? ──────────────────────── -->
+<h2>What is Western Blotting?</h2>
+
+<p>Western blotting is a laboratory technique used to detect and measure specific <strong>proteins</strong> in a biological sample. Proteins are the molecular machines of cells — they carry out nearly every function, from structural support to catalyzing chemical reactions. Researchers often need to know <em>how much</em> of a particular protein is present in different samples (e.g., healthy vs. diseased tissue, treated vs. untreated cells).</p>
+
+<h3>How the technique works</h3>
+<ol>
+  <li><strong>Separate</strong> — Proteins are extracted from cells and loaded into lanes of a polyacrylamide gel. An electric field pulls them through the gel, separating them by size. Smaller proteins travel farther.</li>
+  <li><strong>Transfer</strong> — The separated proteins are transferred (blotted) from the gel onto a membrane (nitrocellulose or PVDF), preserving their positions.</li>
+  <li><strong>Probe</strong> — The membrane is incubated with an antibody that binds specifically to the protein of interest. A secondary antibody, linked to an enzyme or fluorescent tag, makes the target visible.</li>
+  <li><strong>Detect</strong> — The membrane is imaged (chemiluminescence, fluorescence, or colorimetric). The result is a gel image showing dark or bright <strong>bands</strong> at the positions where the target protein is present.</li>
+</ol>
+
+<p>The <strong>intensity</strong> of each band reflects the amount of protein — darker or brighter bands mean more protein. <em>Densitometry</em> is the process of measuring those intensities numerically so researchers can make quantitative comparisons.</p>
+
+<!-- ─── 2. HOW DENSITOMETRY WORKS ─────────────────────────── -->
+<h2>How Densitometry Works</h2>
+
+<p>Turning a blot image into reliable numbers involves several image-processing steps. BlotLab automates them all in the browser.</p>
+
+<h3>Rolling Ball Background Subtraction</h3>
+<p>Blot images have uneven background intensity caused by lighting variation, membrane staining, and other artifacts. The <strong>rolling ball</strong> algorithm estimates the background by "rolling" a virtual sphere under the intensity surface of the image, like rolling a ball along the underside of a landscape. Points the ball can touch become the estimated background.</p>
+<div class="eq">corrected(x,y) = original(x,y) − background(x,y)</div>
+<p>The ball radius controls sensitivity: a larger radius treats more of the image as signal; a smaller radius removes more local background. The default in BlotLab is 50 pixels.</p>
+
+<h3>Lane Detection</h3>
+<p>Each lane corresponds to one sample loaded on the gel. BlotLab detects lanes automatically by computing the <strong>vertical intensity projection</strong> — summing pixel intensities along each column of the image. Peaks in this projection correspond to lanes; valleys correspond to gaps between lanes.</p>
+
+<h3>Band ROI Detection</h3>
+<p>Within each lane, BlotLab computes a <strong>horizontal intensity profile</strong> (summing pixels along each row). Peaks in this profile indicate bands. A rectangular <em>Region of Interest (ROI)</em> is placed around each detected band.</p>
+
+<h3>Integrated Intensity</h3>
+<p>The quantitative signal for each band is the <strong>integrated intensity</strong>: the sum of all pixel values within its ROI after background subtraction.</p>
+<div class="eq">I = Σ (pixel values within ROI)</div>
+<p>This single number represents the relative amount of protein in that band.</p>
+
+<!-- ─── 3. KEY CONCEPTS ───────────────────────────────────── -->
+<h2>Key Concepts</h2>
+
+<h3>Normalization to a Loading Control</h3>
+<p>The amount of protein loaded into each lane is never perfectly equal. To correct for this, researchers also probe for a <strong>loading control</strong> — a "housekeeping" protein (such as GAPDH, β-actin, or tubulin) that is expressed at roughly constant levels in all samples.</p>
+<div class="eq">normalized = target_band_intensity / loading_control_intensity</div>
+<p>Dividing the target intensity by the loading-control intensity in the same lane corrects for unequal loading and allows fair comparison across lanes.</p>
+
+<h3>Fold Change</h3>
+<p>Once normalized, results are often expressed as <strong>fold change</strong> relative to a control lane (e.g., untreated sample). A fold change of 2.0 means twice as much protein as the control.</p>
+<div class="eq">fold change = normalized_sample / normalized_control</div>
+
+<h3>Why This Matters</h3>
+<p>Without normalization and fold-change calculation, differences in loading would be mistaken for differences in protein expression. Proper densitometry turns a subjective visual impression into a reproducible, publishable number.</p>
+
+<!-- ─── 4. HOW TO USE BLOTLAB ─────────────────────────────── -->
+<h2>How to Use BlotLab</h2>
+
+<ol class="steps">
+  <li>
+    <strong>Upload your blot image</strong><br>
+    Click <em>📂 Upload</em> or drag-and-drop a TIFF, PNG, or JPEG image onto the canvas. The image is processed entirely in your browser — nothing is sent to any server.
+  </li>
+  <li>
+    <strong>Set the ball radius</strong><br>
+    Adjust the <em>Ball r</em> parameter if needed (default 50 px). Larger values preserve more broad intensity features; smaller values remove more local background.
+  </li>
+  <li>
+    <strong>Auto-detect lanes &amp; bands</strong><br>
+    Click <em>🔍 Auto-detect</em>. BlotLab subtracts the background, detects lane boundaries, and locates bands within each lane. Overlays appear on the canvas.
+  </li>
+  <li>
+    <strong>Normalize</strong><br>
+    Select the loading-control band index and click <em>📊 Normalize</em>. The results panel shows raw intensities, normalized values, and fold changes.
+  </li>
+  <li>
+    <strong>Review results</strong><br>
+    Check the table and bar chart. Adjust the control band or rerun detection if needed.
+  </li>
+  <li>
+    <strong>Export</strong><br>
+    Click <em>💾 CSV</em> to download a spreadsheet of results, or <em>🖼️ Chart PNG</em> to save the bar chart as an SVG.
+  </li>
+</ol>
+
+<!-- ─── 5. GLOSSARY ────────────────────────────────────────── -->
+<h2>Glossary</h2>
+
+<ul class="glossary">
+  <li><strong>Band</strong> — A dark or bright stripe on a western blot image indicating the presence of a specific protein at a particular molecular weight.</li>
+  <li><strong>Densitometry</strong> — The quantitative measurement of optical density or pixel intensity in an image, used to determine relative protein amounts.</li>
+  <li><strong>Fold change</strong> — The ratio of a sample's normalized intensity to a control sample's normalized intensity. Indicates how much more or less protein is present.</li>
+  <li><strong>Housekeeping protein</strong> — A protein (e.g., GAPDH, β-actin, tubulin) expressed at relatively constant levels in all samples, used as an internal loading reference.</li>
+  <li><strong>Integrated intensity</strong> — The sum of all pixel values within a region of interest, representing total signal from a band.</li>
+  <li><strong>Lane</strong> — A vertical column in a gel corresponding to one loaded sample.</li>
+  <li><strong>Loading control</strong> — A reference band used to normalize for differences in total protein loaded per lane.</li>
+  <li><strong>Normalization</strong> — Dividing target band intensity by loading-control band intensity to correct for unequal loading.</li>
+  <li><strong>ROI (Region of Interest)</strong> — A rectangular area drawn around a band for intensity measurement.</li>
+  <li><strong>Rolling ball algorithm</strong> — A morphological background-estimation method that simulates rolling a sphere under the intensity surface to determine local background levels.</li>
+</ul>
+
+<!-- ─── 6. REFERENCES ──────────────────────────────────────── -->
+<h2>References</h2>
+
+<ol>
+  <li>Sternberger, S. "Biomedical Image Processing." <em>IEEE Computer</em>, 16(1), 1983. — Original rolling ball algorithm description.</li>
+  <li>Schindelin, J. et al. "Fiji: an open-source platform for biological-image analysis." <em>Nature Methods</em>, 9, 676–682, 2012. — ImageJ/Fiji reference implementation.</li>
+  <li>Bass, J.J. et al. "An overview of technical considerations for Western blotting applications to physiological research." <em>Scandinavian Journal of Medicine &amp; Science in Sports</em>, 27(1), 4–25, 2017.</li>
+  <li>Gassmann, M. et al. "Quantifying Western blots: pitfalls of densitometry." <em>Electrophoresis</em>, 30(11), 1845–1855, 2009.</li>
+  <li>Heidebrecht, F. et al. "Improved semiquantitative Western blot technique with increased quantification range." <em>Journal of Immunological Methods</em>, 345(1-2), 40–48, 2009.</li>
+</ol>
+
+<footer>
+  BlotLab is free, open-source, and runs entirely in your browser. No data leaves your machine.<br>
+  &copy; 2025 BlotLab
+</footer>
+
+</div>
+</body>
+</html>

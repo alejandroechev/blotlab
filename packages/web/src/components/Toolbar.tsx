@@ -39,6 +39,7 @@ export function Toolbar({
           <span className="lane-info">{laneCount} lanes</span>
         </>
       )}
+      <button onClick={() => window.open('/intro.html', '_blank')} title="Domain guide">📖 Guide</button>
       <button onClick={onToggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
     </div>
   );
