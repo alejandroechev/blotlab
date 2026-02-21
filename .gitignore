@@ -4,3 +4,4 @@ dist/
 screenshots/
 coverage/
 .vite/
+packages/web/test-results/
