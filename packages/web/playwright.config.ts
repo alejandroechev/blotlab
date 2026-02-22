@@ -8,6 +8,11 @@ export default defineConfig({
     baseURL: 'http://localhost:1440',
     headless: true,
   },
+  webServer: {
+    command: 'pnpm dev',
+    port: 1440,
+    reuseExistingServer: true,
+  },
   projects: [
     { name: 'chromium', use: { browserName: 'chromium' } },
   ],
