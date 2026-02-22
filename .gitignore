@@ -5,3 +5,4 @@ screenshots/
 coverage/
 .vite/
 packages/web/test-results/
+.vercel
