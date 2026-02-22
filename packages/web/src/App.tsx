@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   GrayImage, rgbaToGray, subtractBackground,
   detectLanes, detectBands, measureBands, normalize,
@@ -10,6 +10,22 @@ import { generateSampleImage } from './samples/index.js';
 import { CanvasPanel } from './components/CanvasPanel.js';
 import { ResultsPanel } from './components/ResultsPanel.js';
 
+const STORAGE_KEY = 'blotlab-state';
+
+interface PersistedState {
+  ballRadius: number;
+  controlBand: number;
+  lastSampleId?: string;
+}
+
+function loadPersisted(): PersistedState {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch { /* ignore */ }
+  return { ballRadius: 50, controlBand: 0 };
+}
+
 function getInitialTheme(): 'light' | 'dark' {
   try {
     const saved = localStorage.getItem('blotlab-theme');
@@ -19,6 +35,7 @@ function getInitialTheme(): 'light' | 'dark' {
 }
 
 export function App() {
+  const persisted = useRef(loadPersisted());
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
   const [imageBitmap, setImageBitmap] = useState<ImageBitmap | null>(null);
   const [grayImage, setGrayImage] = useState<GrayImage | null>(null);
@@ -28,10 +45,33 @@ export function App() {
   const [results, setResults] = useState<NormalizedResult[]>([]);
   const [exportRows, setExportRows] = useState<ExportRow[]>([]);
   const [chartData, setChartData] = useState<{ lane: number; value: number }[]>([]);
-  const [controlBand, setControlBand] = useState(0);
-  const [ballRadius, setBallRadius] = useState(50);
+  const [controlBand, setControlBand] = useState(persisted.current.controlBand);
+  const [ballRadius, setBallRadius] = useState(persisted.current.ballRadius);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastSampleId, setLastSampleId] = useState<string | undefined>(persisted.current.lastSampleId);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Auto-save settings to localStorage
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const state: PersistedState = { ballRadius, controlBand, lastSampleId };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch { /* ignore */ }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [ballRadius, controlBand, lastSampleId]);
+
+  // Auto-load last sample on mount
+  useEffect(() => {
+    if (persisted.current.lastSampleId) {
+      try {
+        const file = generateSampleImage(persisted.current.lastSampleId);
+        loadImage(file);
+      } catch { /* sample not found */ }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleTheme = useCallback(() => {
     setTheme((t) => {
@@ -61,7 +101,7 @@ export function App() {
 
   const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) loadImage(file);
+    if (file) { setLastSampleId(undefined); loadImage(file); }
   }, [loadImage]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -72,6 +112,7 @@ export function App() {
 
   const loadSample = useCallback((id: string) => {
     const file = generateSampleImage(id);
+    setLastSampleId(id);
     loadImage(file);
   }, [loadImage]);
 

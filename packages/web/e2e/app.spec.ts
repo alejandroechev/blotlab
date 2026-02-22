@@ -347,3 +347,23 @@ test.describe('Multi-Band Verification', () => {
     expect(count).toBeGreaterThanOrEqual(2);
   });
 });
+
+// ─── State Persistence ─────────────────────────────────
+test.describe('State Persistence', () => {
+  test('settings and last sample persist across page reload', async ({ page }) => {
+    await page.goto('/');
+    // Load a sample
+    await loadSample(page, 'simple-4lane');
+    await waitForCanvas(page);
+    // Wait for debounced save
+    await page.waitForTimeout(700);
+    // Reload — sample should auto-reload
+    await page.reload();
+    await waitForCanvas(page);
+    // Verify stored state
+    const stored = await page.evaluate(() => localStorage.getItem('blotlab-state'));
+    expect(stored).toBeTruthy();
+    const parsed = JSON.parse(stored!);
+    expect(parsed.lastSampleId).toBe('simple-4lane');
+  });
+});
