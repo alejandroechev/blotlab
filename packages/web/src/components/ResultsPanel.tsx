@@ -7,9 +7,21 @@ interface ResultsPanelProps {
   controlBand: number;
   onControlBandChange: (b: number) => void;
   bandIndices: number[];
+  laneCount: number;
+  onExportCSV: () => void;
+  onExportRawCSV: () => void;
+  onExportChartSVG: () => void;
+  onExportChartPNG: () => void;
+  theme: 'light' | 'dark';
 }
 
-export function ResultsPanel({ exportRows, chartData, controlBand, onControlBandChange, bandIndices }: ResultsPanelProps) {
+export function ResultsPanel({
+  exportRows, chartData, controlBand, onControlBandChange, bandIndices,
+  laneCount, onExportCSV, onExportRawCSV, onExportChartSVG, onExportChartPNG, theme,
+}: ResultsPanelProps) {
+  const textColor = theme === 'dark' ? '#e2e8f0' : '#1a1a1a';
+  const gridColor = theme === 'dark' ? '#334155' : '#ccc';
+
   return (
     <div className="results-panel">
       <h2>Results</h2>
@@ -23,18 +35,26 @@ export function ResultsPanel({ exportRows, chartData, controlBand, onControlBand
             ))}
           </select>
         </label>
+        <span className="lane-info">{laneCount} lanes detected</span>
       </div>
 
       <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData.map((d) => ({ name: `Lane ${d.lane}`, value: Math.round(d.value * 1000) / 1000 }))}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" fontSize={11} />
-            <YAxis fontSize={11} />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+            <XAxis dataKey="name" fontSize={11} tick={{ fill: textColor }} />
+            <YAxis fontSize={11} tick={{ fill: textColor }} />
+            <Tooltip
+              contentStyle={{ background: theme === 'dark' ? '#1e293b' : '#fff', border: `1px solid ${gridColor}`, color: textColor }}
+              labelStyle={{ color: textColor }}
+            />
             <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+      </div>
+      <div className="inline-export-row">
+        <button className="btn-inline-export" onClick={onExportChartPNG}>🖼 PNG</button>
+        <button className="btn-inline-export" onClick={onExportChartSVG}>📐 SVG</button>
       </div>
 
       <h2>Data Table</h2>
@@ -62,6 +82,10 @@ export function ResultsPanel({ exportRows, chartData, controlBand, onControlBand
           ))}
         </tbody>
       </table>
+      <div className="inline-export-row">
+        <button className="btn-inline-export" onClick={onExportCSV}>📄 CSV</button>
+        <button className="btn-inline-export" onClick={onExportRawCSV}>📄 Raw CSV</button>
+      </div>
     </div>
   );
 }

@@ -2,22 +2,19 @@ import { samples } from '../samples/index.js';
 
 interface ToolbarProps {
   onUpload: () => void;
-  onAutoDetect: () => void;
-  onNormalize: () => void;
-  onExportCSV: () => void;
-  onExportChart: () => void;
+  onAnalyze: () => void;
   onToggleTheme: () => void;
   onLoadSample: (id: string) => void;
   theme: 'light' | 'dark';
   ballRadius: number;
   onBallRadiusChange: (r: number) => void;
-  laneCount: number;
   hasImage: boolean;
+  isProcessing: boolean;
 }
 
 export function Toolbar({
-  onUpload, onAutoDetect, onNormalize, onExportCSV, onExportChart,
-  onToggleTheme, onLoadSample, theme, ballRadius, onBallRadiusChange, laneCount, hasImage,
+  onUpload, onAnalyze,
+  onToggleTheme, onLoadSample, theme, ballRadius, onBallRadiusChange, hasImage, isProcessing,
 }: ToolbarProps) {
   return (
     <div className="toolbar">
@@ -36,7 +33,7 @@ export function Toolbar({
       {hasImage && (
         <>
           <div className="radius-control">
-            <span>Ball r:</span>
+            <span>r:</span>
             <input
               type="number"
               min={1}
@@ -45,13 +42,12 @@ export function Toolbar({
               onChange={(e) => onBallRadiusChange(Number(e.target.value))}
             />
           </div>
-          <button onClick={onAutoDetect}>🔍 Auto-detect</button>
-          <button onClick={onNormalize}>📊 Normalize</button>
-          <button onClick={onExportCSV}>💾 CSV</button>
-          <button onClick={onExportChart}>🖼️ Chart PNG</button>
-          <span className="lane-info">{laneCount} lanes</span>
+          <button className="btn-analyze" onClick={onAnalyze} disabled={isProcessing}>
+            {isProcessing ? '⏳ Processing…' : '▶ Analyze'}
+          </button>
         </>
       )}
+      <div className="toolbar-spacer" />
       <button onClick={() => window.open('/intro.html', '_blank')} title="Domain guide">📖 Guide</button>
       <button onClick={() => window.open('https://github.com/alejandroechev/blotlab/issues/new', '_blank')} title="Feedback">💬 Feedback</button>
       <button onClick={onToggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>

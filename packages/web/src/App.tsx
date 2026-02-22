@@ -10,8 +10,16 @@ import { generateSampleImage } from './samples/index.js';
 import { CanvasPanel } from './components/CanvasPanel.js';
 import { ResultsPanel } from './components/ResultsPanel.js';
 
+function getInitialTheme(): 'light' | 'dark' {
+  try {
+    const saved = localStorage.getItem('blotlab-theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch { /* ignore */ }
+  return 'light';
+}
+
 export function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
   const [imageBitmap, setImageBitmap] = useState<ImageBitmap | null>(null);
   const [grayImage, setGrayImage] = useState<GrayImage | null>(null);
   const [correctedImage, setCorrectedImage] = useState<GrayImage | null>(null);
@@ -22,10 +30,15 @@ export function App() {
   const [chartData, setChartData] = useState<{ lane: number; value: number }[]>([]);
   const [controlBand, setControlBand] = useState(0);
   const [ballRadius, setBallRadius] = useState(50);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const toggleTheme = useCallback(() => {
-    setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+    setTheme((t) => {
+      const next = t === 'light' ? 'dark' : 'light';
+      try { localStorage.setItem('blotlab-theme', next); } catch { /* ignore */ }
+      return next;
+    });
   }, []);
 
   const loadImage = useCallback(async (file: File) => {
@@ -62,24 +75,25 @@ export function App() {
     loadImage(file);
   }, [loadImage]);
 
-  const runAutoDetect = useCallback(() => {
+  const runAnalyze = useCallback(() => {
     if (!grayImage) return;
-    const corrected = subtractBackground(grayImage, ballRadius);
-    setCorrectedImage(corrected);
-    const detectedLanes = detectLanes(corrected);
-    setLanes(detectedLanes);
-    const detectedBands = detectBands(corrected, detectedLanes);
-    setBands(detectedBands);
-  }, [grayImage, ballRadius]);
-
-  const runNormalize = useCallback(() => {
-    if (!correctedImage || bands.length === 0) return;
-    const measured = measureBands(correctedImage, bands);
-    const norm = normalize(measured, controlBand, 0);
-    setResults(norm);
-    setExportRows(toExportRows(norm));
-    setChartData(toChartData(norm, 0));
-  }, [correctedImage, bands, controlBand]);
+    setIsProcessing(true);
+    // Use setTimeout to let UI show processing state before heavy computation
+    setTimeout(() => {
+      const corrected = subtractBackground(grayImage, ballRadius);
+      setCorrectedImage(corrected);
+      const detectedLanes = detectLanes(corrected);
+      setLanes(detectedLanes);
+      const detectedBands = detectBands(corrected, detectedLanes);
+      setBands(detectedBands);
+      const measured = measureBands(corrected, detectedBands);
+      const norm = normalize(measured, controlBand, 0);
+      setResults(norm);
+      setExportRows(toExportRows(norm));
+      setChartData(toChartData(norm, 0));
+      setIsProcessing(false);
+    }, 0);
+  }, [grayImage, ballRadius, controlBand]);
 
   const downloadCSV = useCallback(() => {
     const csv = toCSV(exportRows);
@@ -92,7 +106,20 @@ export function App() {
     URL.revokeObjectURL(url);
   }, [exportRows]);
 
-  const downloadChart = useCallback(() => {
+  const downloadRawCSV = useCallback(() => {
+    const header = 'Lane,Band,RawIntensity';
+    const lines = exportRows.map((r) => `${r.lane},${r.band},${r.rawIntensity}`);
+    const csv = [header, ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'blotlab-raw-data.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [exportRows]);
+
+  const downloadChartSVG = useCallback(() => {
     const svg = document.querySelector('.chart-container svg');
     if (!svg) return;
     const serializer = new XMLSerializer();
@@ -106,6 +133,35 @@ export function App() {
     URL.revokeObjectURL(url);
   }, []);
 
+  const downloadChartPNG = useCallback(() => {
+    const svg = document.querySelector('.chart-container svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * 2;
+      canvas.height = img.height * 2;
+      const ctx = canvas.getContext('2d')!;
+      ctx.scale(2, 2);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const pngUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = pngUrl;
+        a.download = 'blotlab-chart.png';
+        a.click();
+        URL.revokeObjectURL(pngUrl);
+      }, 'image/png');
+    };
+    img.src = url;
+  }, []);
+
   // Derive unique band indices from the measured results
   const bandIndices = [...new Set(results.map((r) => r.bandIndex))];
 
@@ -113,17 +169,14 @@ export function App() {
     <div className="app" data-theme={theme}>
       <Toolbar
         onUpload={() => fileRef.current?.click()}
-        onAutoDetect={runAutoDetect}
-        onNormalize={runNormalize}
-        onExportCSV={downloadCSV}
-        onExportChart={downloadChart}
+        onAnalyze={runAnalyze}
         onToggleTheme={toggleTheme}
         onLoadSample={loadSample}
         theme={theme}
         ballRadius={ballRadius}
         onBallRadiusChange={setBallRadius}
-        laneCount={lanes.length}
         hasImage={!!grayImage}
+        isProcessing={isProcessing}
       />
       <input ref={fileRef} type="file" accept="image/*,.tif,.tiff" onChange={handleFile} className="hidden-input" />
       <div className="main">
@@ -141,6 +194,12 @@ export function App() {
             controlBand={controlBand}
             onControlBandChange={setControlBand}
             bandIndices={bandIndices}
+            laneCount={lanes.length}
+            onExportCSV={downloadCSV}
+            onExportRawCSV={downloadRawCSV}
+            onExportChartSVG={downloadChartSVG}
+            onExportChartPNG={downloadChartPNG}
+            theme={theme}
           />
         )}
       </div>

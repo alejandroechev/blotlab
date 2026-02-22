@@ -18,17 +18,10 @@ async function waitForCanvas(page: Page) {
   await expect(page.locator('.canvas-panel canvas')).toBeVisible({ timeout: 5000 });
 }
 
-// Helper: click Auto-detect and wait for lane count
-async function autoDetect(page: Page) {
-  await page.getByText('🔍 Auto-detect').click();
-  // Wait for lane-info to show non-zero lanes
-  await expect(page.locator('.lane-info')).toBeVisible({ timeout: 5000 });
-}
-
-// Helper: click Normalize and wait for results panel
-async function normalize(page: Page) {
-  await page.getByText('📊 Normalize').click();
-  await expect(page.locator('.results-panel')).toBeVisible({ timeout: 5000 });
+// Helper: click Analyze and wait for results panel
+async function runAnalyze(page: Page) {
+  await page.getByText('▶ Analyze').click();
+  await expect(page.locator('.results-panel')).toBeVisible({ timeout: 10000 });
 }
 
 // ─── Page Load ────────────────────────────────────────────
@@ -59,12 +52,15 @@ test.describe('Page Load', () => {
     await expect(page.getByText('🌙')).toBeVisible();
   });
 
-  test('auto-detect/normalize/export hidden when no image', async ({ page }) => {
+  test('analyze button hidden when no image', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('🔍 Auto-detect')).not.toBeVisible();
-    await expect(page.getByText('📊 Normalize')).not.toBeVisible();
-    await expect(page.getByText('💾 CSV')).not.toBeVisible();
-    await expect(page.getByText('🖼️ Chart PNG')).not.toBeVisible();
+    await expect(page.getByText('▶ Analyze')).not.toBeVisible();
+  });
+
+  test('toolbar alignment: guide/feedback/theme on right', async ({ page }) => {
+    await page.goto('/');
+    const spacer = page.locator('.toolbar-spacer');
+    await expect(spacer).toBeAttached();
   });
 });
 
@@ -86,6 +82,16 @@ test.describe('Theme Toggle', () => {
     await page.getByText('☀️').click();
     await expect(page.locator('.app')).toHaveAttribute('data-theme', 'light');
     await expect(page.getByText('🌙')).toBeVisible();
+  });
+
+  test('persists theme in localStorage', async ({ page }) => {
+    await page.goto('/');
+    await page.getByText('🌙').click();
+    await expect(page.locator('.app')).toHaveAttribute('data-theme', 'dark');
+    // Reload and verify theme persists
+    await page.reload();
+    await expect(page.locator('.app')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.getByText('☀️')).toBeVisible();
   });
 });
 
@@ -111,8 +117,8 @@ test.describe('Sample Loading', () => {
       await page.goto('/');
       await loadSample(page, id);
       await waitForCanvas(page);
-      // After loading, toolbar should show image-dependent buttons
-      await expect(page.getByText('🔍 Auto-detect')).toBeVisible();
+      // After loading, toolbar should show Analyze button
+      await expect(page.getByText('▶ Analyze')).toBeVisible();
     });
   }
 
@@ -128,39 +134,31 @@ test.describe('Sample Loading', () => {
   });
 });
 
-// ─── Core Workflow: Load → Detect → Normalize ─────────────
+// ─── Core Workflow: Load → Analyze ─────────────────────────
 
 test.describe('Core Workflow', () => {
-  test('load sample → auto-detect → shows lanes', async ({ page }) => {
+  test('analyze button triggers full pipeline', async ({ page }) => {
     await page.goto('/');
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    const laneText = await page.locator('.lane-info').textContent();
-    expect(laneText).toMatch(/\d+ lanes/);
-    const laneCount = parseInt(laneText!);
-    expect(laneCount).toBeGreaterThan(0);
-  });
-
-  test('load sample → detect → normalize → shows results table', async ({ page }) => {
-    await page.goto('/');
-    await loadSample(page, 'simple-4lane');
-    await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
+    await runAnalyze(page);
     // Results panel should have table with data rows
     const rows = page.locator('.results-panel table tbody tr');
     await expect(rows.first()).toBeVisible();
     const count = await rows.count();
     expect(count).toBeGreaterThan(0);
+    // Lane count shown in results area
+    const laneInfo = page.locator('.results-panel .lane-info');
+    await expect(laneInfo).toBeVisible();
+    const laneText = await laneInfo.textContent();
+    expect(laneText).toMatch(/\d+ lanes/);
   });
 
   test('results table has correct columns', async ({ page }) => {
     await page.goto('/');
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
+    await runAnalyze(page);
     const headers = page.locator('.results-panel table thead th');
     const headerTexts = await headers.allTextContents();
     expect(headerTexts).toEqual(['Lane', 'Band', 'Raw', 'Corrected', 'Normalized', 'Fold']);
@@ -170,8 +168,7 @@ test.describe('Core Workflow', () => {
     await page.goto('/');
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
+    await runAnalyze(page);
     await expect(page.locator('.chart-container')).toBeVisible();
   });
 
@@ -179,8 +176,7 @@ test.describe('Core Workflow', () => {
     await page.goto('/');
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
+    await runAnalyze(page);
     await expect(page.locator('.results-panel .controls select')).toBeVisible();
   });
 });
@@ -189,39 +185,42 @@ test.describe('Core Workflow', () => {
 
 test.describe('Full Workflow for Each Sample', () => {
   for (const id of SAMPLE_IDS) {
-    test(`"${id}" → detect → normalize produces results`, async ({ page }) => {
+    test(`"${id}" → analyze produces results`, async ({ page }) => {
       await page.goto('/');
       await loadSample(page, id);
       await waitForCanvas(page);
-      await autoDetect(page);
-
-      const laneText = await page.locator('.lane-info').textContent();
-      const laneCount = parseInt(laneText!);
-
-      // Only normalize if lanes were detected (low-contrast may not detect)
-      if (laneCount > 0) {
-        await normalize(page);
-        const rows = page.locator('.results-panel table tbody tr');
-        const count = await rows.count();
-        expect(count).toBeGreaterThan(0);
-      }
+      await runAnalyze(page);
+      const rows = page.locator('.results-panel table tbody tr');
+      const count = await rows.count();
+      expect(count).toBeGreaterThan(0);
     });
   }
 });
 
-// ─── Export Buttons ────────────────────────────────────────
+// ─── In-place Export Buttons ──────────────────────────────
 
-test.describe('Export', () => {
+test.describe('In-place Exports', () => {
+  test('export buttons visible after results', async ({ page }) => {
+    await page.goto('/');
+    await loadSample(page, 'simple-4lane');
+    await waitForCanvas(page);
+    await runAnalyze(page);
+    // Chart exports
+    await expect(page.locator('.results-panel').getByText('🖼 PNG')).toBeVisible();
+    await expect(page.locator('.results-panel').getByText('📐 SVG')).toBeVisible();
+    // Table exports
+    await expect(page.locator('.results-panel').getByText('📄 CSV')).toBeVisible();
+    await expect(page.locator('.results-panel').getByText('📄 Raw CSV')).toBeVisible();
+  });
+
   test('CSV export triggers download', async ({ page }) => {
     await page.goto('/');
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
-
+    await runAnalyze(page);
     const [download] = await Promise.all([
       page.waitForEvent('download'),
-      page.getByText('💾 CSV').click(),
+      page.locator('.results-panel').getByText('📄 CSV').click(),
     ]);
     expect(download.suggestedFilename()).toBe('blotlab-results.csv');
   });
@@ -230,12 +229,10 @@ test.describe('Export', () => {
     await page.goto('/');
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
-
+    await runAnalyze(page);
     const [download] = await Promise.all([
       page.waitForEvent('download'),
-      page.getByText('🖼️ Chart PNG').click(),
+      page.locator('.results-panel').getByText('📐 SVG').click(),
     ]);
     expect(download.suggestedFilename()).toBe('blotlab-chart.svg');
   });
@@ -274,23 +271,13 @@ test.describe('Edge Cases', () => {
     // Wait for last sample to settle
     await waitForCanvas(page);
     // Page should still be functional
-    await expect(page.getByText('🔍 Auto-detect')).toBeVisible();
+    await expect(page.getByText('▶ Analyze')).toBeVisible();
   });
 
-  test('auto-detect without image does nothing (no crash)', async ({ page }) => {
+  test('analyze without image does nothing (no crash)', async ({ page }) => {
     await page.goto('/');
-    // Auto-detect button shouldn't be visible without image, so this is a no-op test
-    await expect(page.getByText('🔍 Auto-detect')).not.toBeVisible();
-  });
-
-  test('normalize without detect does nothing (no crash)', async ({ page }) => {
-    await page.goto('/');
-    await loadSample(page, 'simple-4lane');
-    await waitForCanvas(page);
-    // Click Normalize before Auto-detect — bands are empty, should be a no-op
-    await page.getByText('📊 Normalize').click();
-    // Results panel should not appear
-    await expect(page.locator('.results-panel')).not.toBeVisible();
+    // Analyze button shouldn't be visible without image
+    await expect(page.getByText('▶ Analyze')).not.toBeVisible();
   });
 
   test('window resize does not break layout', async ({ page }) => {
@@ -308,8 +295,7 @@ test.describe('Edge Cases', () => {
     // Full workflow on first sample
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
+    await runAnalyze(page);
     await expect(page.locator('.results-panel')).toBeVisible();
 
     // Load a different sample — results should be cleared
@@ -318,16 +304,15 @@ test.describe('Edge Cases', () => {
     await expect(page.locator('.results-panel')).not.toBeVisible();
   });
 
-  test('re-running detect after normalize does not crash', async ({ page }) => {
+  test('re-running analyze does not crash', async ({ page }) => {
     await page.goto('/');
     await loadSample(page, 'simple-4lane');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
+    await runAnalyze(page);
     await expect(page.locator('.results-panel')).toBeVisible();
 
-    // Re-detect should not crash
-    await autoDetect(page);
+    // Re-analyze should not crash
+    await page.getByText('▶ Analyze').click();
     await expect(page.locator('.toolbar')).toBeVisible();
   });
 });
@@ -339,10 +324,11 @@ test.describe('Dose-Response Verification', () => {
     await page.goto('/');
     await loadSample(page, 'dose-response');
     await waitForCanvas(page);
-    await autoDetect(page);
-    const laneText = await page.locator('.lane-info').textContent();
-    const laneCount = parseInt(laneText!);
-    expect(laneCount).toBeGreaterThan(0);
+    await runAnalyze(page);
+    const laneInfo = page.locator('.results-panel .lane-info');
+    await expect(laneInfo).toBeVisible();
+    const laneText = await laneInfo.textContent();
+    expect(laneText).toMatch(/\d+ lanes/);
   });
 });
 
@@ -353,8 +339,7 @@ test.describe('Multi-Band Verification', () => {
     await page.goto('/');
     await loadSample(page, 'multi-band');
     await waitForCanvas(page);
-    await autoDetect(page);
-    await normalize(page);
+    await runAnalyze(page);
 
     // Should have multiple band options in the control selector
     const options = page.locator('.results-panel .controls select option');
