@@ -308,14 +308,13 @@ test.describe('7. Guide & Feedback Buttons', () => {
     await newPage.close();
   });
 
-  test('Feedback button opens GitHub issues page', async ({ page, context }) => {
+  test('Feedback button opens feedback modal', async ({ page }) => {
     await page.goto('/');
-    const [newPage] = await Promise.all([
-      context.waitForEvent('page'),
-      page.getByText('💬 Feedback').click(),
-    ]);
-    expect(newPage.url()).toContain('github.com');
-    await newPage.close();
+    await page.getByText('💬 Feedback').click();
+    await expect(page.getByText('Send Feedback')).toBeVisible();
+    await expect(page.getByText('Message *')).toBeVisible();
+    // Close modal
+    await page.getByRole('button', { name: 'Cancel' }).click();
   });
 });
 
