@@ -8,7 +8,7 @@
 
 **Body:**
 
-Got tired of the ImageJ workflow for western blot quantification, so I built BlotLab — a free web app that does rolling ball background subtraction, automatic lane detection, band ROI selection, and normalization to loading controls. All in your browser.
+I built BlotLab — a free web app for western blot quantification with rolling ball background subtraction, automatic lane detection, band ROI selection, and normalization to loading controls. Everything runs in the browser.
 
 Upload your blot image, it detects lanes and bands, you pick your loading control (GAPDH, actin, etc.), and it gives you normalized fold changes. No install, no login, no data uploaded to any server — everything runs client-side.
 
