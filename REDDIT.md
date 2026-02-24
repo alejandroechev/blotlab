@@ -4,7 +4,7 @@
 
 ## Post 1: r/labrats
 
-**Title:** I built a free browser-based western blot densitometry tool — no ImageJ macros needed
+**Title:** I built a free browser-based western blot densitometry tool
 
 **Body:**
 
@@ -27,7 +27,7 @@ Would love feedback from people who actually quantify westerns regularly — wha
 
 I built a free, open-source web app for western blot quantification. It does rolling ball background subtraction, automatic lane/band detection, integrated intensity measurement, and normalization to loading controls — all in your browser with no install.
 
-No more fiddling with ImageJ plugins or paying for commercial densitometry software. Just drag and drop your blot image.
+Upload your image and run the workflow directly in the app. Just drag and drop your blot image.
 
 🔗 https://blotlab.vercel.app
 📂 https://github.com/alejandroechev/blotlab
@@ -50,3 +50,4 @@ Everything runs client-side — your images never leave your computer. No accoun
 📂 https://github.com/alejandroechev/blotlab
 
 I'd love to hear what cell biologists need from a densitometry tool — what's painful about your current workflow?
+
