@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import { samples } from '../samples/index.js';
-import { FeedbackModal } from './FeedbackModal';
 
 interface ToolbarProps {
   onUpload: () => void;
@@ -18,7 +16,6 @@ export function Toolbar({
   onUpload, onAnalyze,
   onToggleTheme, onLoadSample, theme, ballRadius, onBallRadiusChange, hasImage, isProcessing,
 }: ToolbarProps) {
-  const [showFeedback, setShowFeedback] = useState(false);
   return (
     <div className="toolbar">
       <h1>🧬 BlotLab</h1>
@@ -52,10 +49,9 @@ export function Toolbar({
       )}
       <div className="toolbar-spacer" />
       <button onClick={() => window.open('/intro.html', '_blank')} title="Domain guide">📖 Guide</button>
-      <button onClick={() => setShowFeedback(true)} title="Feedback">💬 Feedback</button>
+      <a href="https://github.com/alejandroechev/blotlab/issues" target="_blank" rel="noopener noreferrer" className="github-link">💬 Feedback</a>
       <a className="github-link" href="https://github.com/alejandroechev/blotlab" target="_blank" rel="noopener noreferrer">GitHub</a>
       <button onClick={onToggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
-      {showFeedback && <FeedbackModal product="BlotLab" onClose={() => setShowFeedback(false)} />}
     </div>
   );
 }
